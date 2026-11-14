@@ -21,49 +21,49 @@
         </div>
     @endif
 
-    <!-- Active Filters Badge -->
-    <div class="alert alert-light border d-flex justify-content-between align-items-center mb-3">
-        <div>
-            <span class="text-muted">Active filters:</span>
-            <span class="badge bg-primary">Genre ID: {{ $genreId }}</span>
-            <span class="badge bg-primary">Year: {{ $year }}</span>
+    <!-- Part H & I: Search, Filter & Sort Form -->
+    <form method="GET" action="{{ route('comics.index') }}" class="row g-2 mb-4">
+        <!-- Text Search -->
+        <div class="col-md-3">
+            <input type="text" name="search" class="form-control" placeholder="Search title..." value="{{ request('search') }}">
         </div>
-        <a href="{{ route('comics.index') }}" class="btn btn-sm btn-outline-secondary">Clear all</a>
-    </div>
 
-    <!-- Filter by Genre -->
-    <div class="mb-3">
-        <strong class="me-2">Genre:</strong>
-        <div class="btn-group btn-group-sm" role="group">
-            <a href="{{ route('comics.index', ['genre_id' => 'all', 'year' => $year]) }}"
-               class="btn {{ $genreId === 'all' ? 'btn-primary' : 'btn-outline-primary' }}">All</a>
-            @foreach ($genres as $g)
-                <a href="{{ route('comics.index', ['genre_id' => $g->id, 'year' => $year]) }}"
-                    class="btn {{ (string) $genreId === (string) $g->id ? 'btn-primary' : 'btn-outline-primary' }}">{{ $g->name }}</a>
-            @endforeach
+        <!-- Lookup Table Dropdown (Genre) -->
+        <div class="col-md-3">
+            <select name="genre_id" class="form-select">
+                <option value="">All Genres</option>
+                @foreach ($genres as $genre)
+                    <option value="{{ $genre->id }}" @selected(request('genre_id') == $genre->id)>
+                        {{ $genre->name }}
+                    </option>
+                @endforeach
+            </select>
         </div>
-    </div>
 
-    <!-- Filter by Year -->
-    <div class="mb-4">
-        <strong class="me-2">Year:</strong>
-        <div class="btn-group btn-group-sm" role="group">
-            <a href="{{ route('comics.index', ['genre_id' => $genreId, 'year' => 'all']) }}"
-               class="btn {{ $year === 'all' ? 'btn-primary' : 'btn-outline-primary' }}">All</a>
-            <a href="{{ route('comics.index', ['genre_id' => $genreId, 'year' => '2001']) }}"
-               class="btn {{ $year === '2001' ? 'btn-primary' : 'btn-outline-primary' }}">2001</a>
-            <a href="{{ route('comics.index', ['genre_id' => $genreId, 'year' => '2014']) }}"
-               class="btn {{ $year === '2014' ? 'btn-primary' : 'btn-outline-primary' }}">2014</a>
-            <a href="{{ route('comics.index', ['genre_id' => $genreId, 'year' => '2016']) }}"
-               class="btn {{ $year === '2016' ? 'btn-primary' : 'btn-outline-primary' }}">2016</a>
-            <a href="{{ route('comics.index', ['genre_id' => $genreId, 'year' => '2017']) }}"
-               class="btn {{ $year === '2017' ? 'btn-primary' : 'btn-outline-primary' }}">2017</a>
-            <a href="{{ route('comics.index', ['genre_id' => $genreId, 'year' => '2018']) }}"
-               class="btn {{ $year === '2018' ? 'btn-primary' : 'btn-outline-primary' }}">2018</a>
-            <a href="{{ route('comics.index', ['genre_id' => $genreId, 'year' => '2020']) }}"
-               class="btn {{ $year === '2020' ? 'btn-primary' : 'btn-outline-primary' }}">2020</a>
+        <!-- Boolean Filter (Featured) -->
+        <div class="col-md-2">
+            <select name="is_featured" class="form-select">
+                <option value="">Featured: Any</option>
+                <option value="1" @selected(request('is_featured') === '1')>Featured Only</option>
+                <option value="0" @selected(request('is_featured') === '0')>Not Featured</option>
+            </select>
         </div>
-    </div>
+
+        <!-- Sort Control -->
+        <div class="col-md-2">
+            <select name="sort" class="form-select">
+                <option value="title" @selected(request('sort', 'title') === 'title')>Sort: Title</option>
+                <option value="year" @selected(request('sort') === 'year')>Sort: Year</option>
+                <option value="price" @selected(request('sort') === 'price')>Sort: Price</option>
+            </select>
+        </div>
+
+        <!-- Apply & Clear Buttons -->
+        <div class="col-md-2 d-flex gap-2">
+            <button type="submit" class="btn btn-primary w-100">Apply</button>
+            <a href="{{ route('comics.index') }}" class="btn btn-outline-secondary">Clear</a>
+        </div>
+    </form>
 
     <!-- Comics Table -->
     <table class="table table-striped table-bordered align-middle">
@@ -88,9 +88,7 @@
                     <td>{{ $comic->author }}</td>
                     <td>{{ $comic->year }}</td>
                     <td>
-                        <a href="{{ route('comics.index', ['genre_id' => $comic->genre_id, 'year' => $year]) }}">
-                            {{ $comic->genre->name }}
-                        </a>
+                        {{ $comic->genre->name ?? 'N/A' }}
                     </td>
                     <td>${{ number_format($comic->price, 2) }}</td>
                     
@@ -100,7 +98,7 @@
                             <!-- Edit Button -->
                             <a href="{{ route('comics.edit', $comic) }}" class="btn btn-warning btn-sm">Edit</a>
 
-                            <!-- Delete Form (Part E) -->
+                            <!-- Delete Form -->
                             <form action="{{ route('comics.destroy', $comic) }}" method="POST" 
                                   onsubmit="return confirm('Delete this record?')">
                                 @csrf
@@ -118,7 +116,21 @@
         </tbody>
     </table>
 
-    <!-- Part F Requirement: Temporary Query Counter -->
-    <p>Queries: {{ count(\Illuminate\Support\Facades\DB::getQueryLog()) }}</p>
+    
+    <div class="d-flex justify-content-between align-items-center mt-3">
+        <div>
+            @if ($comics->total() > 0)
+                <p class="text-muted mb-0">
+                    Showing <strong>{{ $comics->firstItem() }}</strong> to <strong>{{ $comics->lastItem() }}</strong> of <strong>{{ $comics->total() }}</strong> results
+                </p>
+            @endif
+        </div>
+        <div>
+            {{ $comics->links() }}
+        </div>
+    </div>
+
+    
+    <p class="mt-3">Queries: {{ count(\Illuminate\Support\Facades\DB::getQueryLog()) }}</p>
 
 @endsection

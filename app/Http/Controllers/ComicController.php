@@ -9,25 +9,28 @@ use Illuminate\Http\Request;
 
 class ComicController extends Controller
 {
-    public function index(Request $request)
+   public function index(Request $request)
 {
-    // Idagdag ang extra 'h' sa with() method: withh()
-    $comics = Comic::withh('genre')->get(); 
+    // ILAGAY ITO DITO SA UNAHAN:
+    \Illuminate\Support\Facades\DB::enableQueryLog();
 
-    return view('comics.index', compact('comics'));
+    $query = Comic::with('genre');
+
+    
+
+    $comics = $query->paginate(6)->withQueryString();
+    $genres = Genre::all();
+
+    return view('comics.index', compact('comics', 'genres'));
 }
-
     public function create()
     {
-        
         $genres = Genre::all();
-        
         return view('comics.create', compact('genres'));
     }
 
     public function store(Request $request)
     {
-        
         $validated = $request->validate([
             'title'       => 'required|max:100',
             'author'      => 'required|max:100',
@@ -39,7 +42,6 @@ class ComicController extends Controller
 
         $validated['is_featured'] = $request->boolean('is_featured');
 
-        
         Comic::create($validated);
 
         return redirect()
@@ -48,43 +50,42 @@ class ComicController extends Controller
     }
 
     public function show(Comic $comic)
-{
-    return view('comics.show', ['comic' => $comic]);
-}
+    {
+        return view('comics.show', ['comic' => $comic]);
+    }
 
     public function edit(Comic $comic)
-{
-    $genres = Genre::all(); 
-    return view('comics.edit', compact('comic', 'genres'));
-}
+    {
+        $genres = Genre::all(); 
+        return view('comics.edit', compact('comic', 'genres'));
+    }
 
     public function update(Request $request, Comic $comic)
-{
-    $validated = $request->validate([
-        'title' => 'required|string|max:255',
-        'author' => 'required|string|max:255',
-        'genre_id' => 'required|exists:genres,id',
-    ]);
+    {
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'author' => 'required|string|max:255',
+            'genre_id' => 'required|exists:genres,id',
+        ]);
 
-    $comic->update($validated);
+        $comic->update($validated);
 
-    // Context array na may kasamang tunay na record ID
-    Log::info('Comic record updated', [
-        'id' => $comic->id,
-    ]);
+        Log::info('Comic record updated', [
+            'id' => $comic->id,
+        ]);
 
-    return redirect()->route('comics.index')->with('success', 'Comic updated successfully!');
-}
+        return redirect()->route('comics.index')->with('success', 'Comic updated successfully!');
+    }
 
     public function destroy(Comic $comic)
-{
-    // Haharangan (403) kapag ang genre ng comic na ito ay may HULING ISANG comic na lang na natitira
-    abort_if($comic->genre->comics()->count() === 1, 403);
+    {
+        abort_if($comic->genre->comics()->count() === 1, 403);
 
-    $comic->delete();
+        $comic->delete();
 
-    return redirect()->route('comics.index')->with('success', 'Comic deleted successfully!');
-}
+        return redirect()->route('comics.index')->with('success', 'Comic deleted successfully!');
+    }
+
     public function feature()
     {
         $comic = Comic::where('is_featured', true)->first();

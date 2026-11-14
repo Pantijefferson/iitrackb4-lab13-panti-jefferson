@@ -4,17 +4,26 @@
     $isComics  = request()->is('comics', 'comics/*') && !$isFeature && !$isFilter;
 @endphp
 
-<nav class="mb-3">
-    <a href="{{ route('comics.index') }}"
-       class="btn btn-sm {{ $isComics ? 'btn-primary' : 'btn-secondary' }}">
-        Comics
-    </a>
-    <a href="{{ route('comics.feature') }}"
-       class="btn btn-sm {{ $isFeature ? 'btn-primary' : 'btn-secondary' }}">
-        Featured
-    </a>
-    <a href="{{ route('comics.filter') }}"
-       class="btn btn-sm {{ $isFilter ? 'btn-primary' : 'btn-secondary' }}">
-        Filter
-    </a>
+<nav class="navbar navbar-expand-lg bg-dark" data-bs-theme="dark">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="{{ route('home') }}">ComicVault</a>
+
+        <button class="navbar-toggler" type="button"
+                data-bs-toggle="collapse" data-bs-target="#mainNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="mainNav">
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link {{ request()->routeIs('home') ? 'active' : '' }}"
+                       href="{{ route('home') }}">Home</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {{ request()->routeIs('comics.*') ? 'active' : '' }}"
+                       href="{{ route('comics.index') }}">Comics</a>
+                </li>
+            </ul>
+        </div>
+    </div>
 </nav>
