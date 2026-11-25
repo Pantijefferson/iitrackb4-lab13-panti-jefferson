@@ -6,20 +6,14 @@
 
     <h2 class="mb-3">List of Recommendations</h2>
 
-    <!-- Add Comic Button -->
-    <div class="mb-3">
-        <a href="{{ route('comics.create') }}" class="btn btn-primary">
-            Add Comic
-        </a>
-    </div>
-
-    <!-- Success Message Alert -->
-    @if (session('success'))
-        <div class="alert alert-success alert-dismissible fade show mb-3" role="alert">
-            {{ session('success') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    <!-- Add Comic Button (signed-in only) -->
+    @auth
+        <div class="mb-3">
+            <a href="{{ route('comics.create') }}" class="btn btn-primary">
+                + Add Comic
+            </a>
         </div>
-    @endif
+    @endauth
 
     <!-- Part H & I: Search, Filter & Sort Form -->
     <form method="GET" action="{{ route('comics.index') }}" class="row g-2 mb-4">
@@ -74,7 +68,9 @@
                 <th>Year</th>
                 <th>Genre</th>
                 <th>Price</th>
-                <th style="width: 150px;">Actions</th>
+                @auth
+                    <th style="width: 150px;">Actions</th>
+                @endauth
             </tr>
         </thead>
         <tbody>
@@ -87,36 +83,33 @@
                     </td>
                     <td>{{ $comic->author }}</td>
                     <td>{{ $comic->year }}</td>
-                    <td>
-                        {{ $comic->genre->name ?? 'N/A' }}
-                    </td>
+                    <td>{{ $comic->genre->name ?? 'N/A' }}</td>
                     <td>${{ number_format($comic->price, 2) }}</td>
-                    
-                    <!-- ACTIONS COLUMN WITH EDIT BUTTON & DELETE FORM -->
-                    <td>
-                        <div class="d-flex gap-1">
-                            <!-- Edit Button -->
-                            <a href="{{ route('comics.edit', $comic) }}" class="btn btn-warning btn-sm">Edit</a>
 
-                            <!-- Delete Form -->
-                            <form action="{{ route('comics.destroy', $comic) }}" method="POST" 
-                                  onsubmit="return confirm('Delete this record?')">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" class="btn btn-danger btn-sm">Delete</button>
-                            </form>
-                        </div>
-                    </td>
+                    <!-- Actions: Edit & Delete (signed-in only) -->
+                    @auth
+                        <td>
+                            <div class="d-flex gap-1">
+                                <a href="{{ route('comics.edit', $comic) }}" class="btn btn-warning btn-sm">Edit</a>
+
+                                <form action="{{ route('comics.destroy', $comic) }}" method="POST"
+                                      onsubmit="return confirm('Delete this record?')">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                                </form>
+                            </div>
+                        </td>
+                    @endauth
                 </tr>
             @empty
                 <tr>
-                    <td colspan="6" class="text-center">No Comics Available</td>
+                    <td colspan="{{ auth()->check() ? 6 : 5 }}" class="text-center">No Comics Available</td>
                 </tr>
             @endforelse
         </tbody>
     </table>
 
-    
     <div class="d-flex justify-content-between align-items-center mt-3">
         <div>
             @if ($comics->total() > 0)
@@ -130,7 +123,6 @@
         </div>
     </div>
 
-    
     <p class="mt-3">Queries: {{ count(\Illuminate\Support\Facades\DB::getQueryLog()) }}</p>
 
 @endsection
